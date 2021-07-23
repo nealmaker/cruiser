@@ -32,7 +32,7 @@ new_cruise <- function(path){
   }
 
 
- # Data entry errors -----------------------------------------------------------
+  # Data entry errors ----------------------------------------------------------
 
   if(is.na(cruise$property[,2][cruise$property[,1] == "prop_file_id"])) {
     message("Property file id missing from cruise workbook.")
