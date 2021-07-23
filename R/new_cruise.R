@@ -34,6 +34,11 @@ new_cruise <- function(path){
 
   # Data entry errors ----------------------------------------------------------
 
+  if(!(all(c("prop_file_id", "inv_type", "plot size") %in%
+           cruise$property[,1]))) {
+    stop("Critical fields missing from property worksheet.")
+  }
+
   if(is.na(cruise$property[,2][cruise$property[,1] == "prop_file_id"])) {
     message("Property file id missing from cruise workbook.")
   }
