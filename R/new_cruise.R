@@ -14,7 +14,7 @@ new_cruise <- function(path){
   names(cruise) <- c("property", "stands", "trees", "regen", "habitat")
 
   cruise[[1]] <- XLConnect::readWorksheet(wkbk, sheet = 1, header = FALSE,
-                                          endCol = 2)
+                                          endCol = 3)
   cruise[[2]] <- XLConnect::readWorksheet(wkbk, sheet = 2, header = TRUE)
   cruise[[3]] <- XLConnect::readWorksheet(wkbk, sheet = 3, header = TRUE)
   cruise[[4]] <- XLConnect::readWorksheet(wkbk, sheet = 4, header = TRUE)
@@ -32,7 +32,12 @@ new_cruise <- function(path){
   }
 
 
-  # Data entry errors ----------------------------------------------------------
+  # property df ----------------------------------------------------------------
+
+  if(!(all(c("prop_file_id", "inv_type", "plot_size") %in%
+           cruise$property[,1]))) {
+    stop("Critical fields missing from property worksheet.")
+  }
 
   if(is.na(cruise$property[,2][cruise$property[,1] == "prop_file_id"])) {
     message("Property file id missing from cruise workbook.")
@@ -46,7 +51,7 @@ new_cruise <- function(path){
     stop("No valid plot size entered in cruise workbook.")
   }
 
-  if(!(cruise$property[,2][cruise$property[,1] == "inv_type"] == 3)) {
+  if(cruise$property[,2][cruise$property[,1] == "inv_type"] == 3) {
     if(is.na(cruise$property[,2][cruise$property[,1] == "dbh_cutoffs"])) {
       stop("Nested fixed area plots indicated, but no dbh cutoffs provided.")
     }
@@ -57,7 +62,7 @@ new_cruise <- function(path){
 
   # Stands df ------------------------------------------------------------------
 
-  if(!is.na(cruise$stands)) {
+  if(!(typeof(cruise$stands) == "logical")) {
     # ensure column headers are right
 
     cruise$stands <- cruise$stands %>%
@@ -73,41 +78,8 @@ new_cruise <- function(path){
 
   # trees df -------------------------------------------------------------------
 
-  if(!is.na(cruise$trees)) {
+  if(!(typeof(cruise$trees) == "logical")) {
     # ensure column headers are right
-
-    cruise$trees <- cruise$trees %>%
-      tidyr::fill(cruise$trees, stand, plot) %>%
-      dplyr::select(-code) %>%
-      dplyr::mutate(dbh = as.numeric(dbh),
-                    logs = as.character(logs),
-                    stand = as.character(stand),
-                    cr = as.numeric(cr) * 10,
-                    live = dplyr::if_else(vigor == 5, 0, 1),
-                    ags = dplyr::if_else(vigor %in% c(1:3, NA) &
-                                           (stringr::str_detect(logs, "2") |
-                                              stringr::str_detect(logs, "1") |
-                                              stringr::str_detect(logs, "*")),
-                                         1, 0),
-                    spp = as.factor(spp))
-
-    # tpa depends on inventory type
-    if(cruise$property[,2][cruise$property[,1] == "inv_type"] == 1) {
-      # prism
-      cruise$trees$tpa <-
-        cruise$property[,2][cruise$property[,1] == "plot_size"] /
-        (0.005454 * cruise$trees$dbh ^ 2)
-    } else if((cruise$property[,2][cruise$property[,1] == "inv_type"] == 2)) {
-      # fixed
-      cruise$trees$tpa <-
-        1 / cruise$property[,2][cruise$property[,1] == "plot_size"]
-    } else if((cruise$property[,2][cruise$property[,1] == "inv_type"] == 3)) {
-      # nested fxed
-      stop("Nested fixed area plots are not supported yet.")
-    }
-
-    cruise$trees$ba_ac <- .005454 * cruise$trees$dbh ^ 2 * cruise$trees$tpa
-
 
     # fill default vigor and cut if some data was collected
     if(!all(is.na(cruise$trees$vigor))) {
@@ -126,6 +98,40 @@ new_cruise <- function(path){
       cruise$trees$cut[is.na(cruise$trees$cut)] <- FALSE
       message("Missing tree vigors defaulting to '2'.")
     }
+
+    cruise$trees <- cruise$trees %>%
+      tidyr::fill(stand, plot) %>%
+      dplyr::select(-code) %>%
+      dplyr::mutate(dbh = as.numeric(dbh),
+                    logs = as.character(logs),
+                    vigor = as.numeric(vigor),
+                    stand = as.character(stand),
+                    cr = as.numeric(cr) * 10,
+                    live = dplyr::if_else(vigor == 5, 0, 1),
+                    ags = dplyr::if_else(vigor %in% c(1:3, NA) &
+                                           (stringr::str_detect(logs, "2") |
+                                              stringr::str_detect(logs, "1") |
+                                              stringr::str_detect(logs, "\\*")),
+                                         1, 0),
+                    spp = as.factor(spp))
+
+    # tpa depends on inventory type
+    if(cruise$property[,2][cruise$property[,1] == "inv_type"] == 1) {
+      # prism
+      cruise$trees$tpa <-
+        as.numeric(cruise$property[,2][cruise$property[,1] == "plot_size"]) /
+        (0.005454 * cruise$trees$dbh ^ 2)
+    } else if((cruise$property[,2][cruise$property[,1] == "inv_type"] == 2)) {
+      # fixed
+      cruise$trees$tpa <-
+        1 / as.numeric(cruise$property[,2][cruise$property[,1] == "plot_size"])
+    } else if((cruise$property[,2][cruise$property[,1] == "inv_type"] == 3)) {
+      # nested fxed
+      stop("Nested fixed area plots are not supported yet.")
+    }
+
+    cruise$trees$ba_ac <- .005454 * cruise$trees$dbh ^ 2 * cruise$trees$tpa
+
 
     # Warnings *******
 
@@ -163,7 +169,7 @@ new_cruise <- function(path){
 
   # regen df -------------------------------------------------------------------
 
-  if(!is.na(cruise$regen)) {
+  if(!(typeof(cruise$regen) == "logical")) {
     # ensure column headers are right
 
     # Warnings *******
@@ -173,7 +179,7 @@ new_cruise <- function(path){
 
   # habitat df -----------------------------------------------------------------
 
-  if(!is.na(cruise$habitat)) {
+  if(!(typeof(cruise$habitat) == "logical")) {
     # ensure column headers are right
 
     # Warnings *******
