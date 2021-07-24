@@ -1,6 +1,6 @@
 # MIT License
 
-Copyright (c) 2021 cruiser authors
+Copyright (c) 2021 Neal Maker
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
