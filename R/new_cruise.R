@@ -1,6 +1,6 @@
  new_cruise <- function(path){
 
-   # Read in inventory worksheets -----------------------------------------------
+  # Read in inventory worksheets -----------------------------------------------
 
   wkbk <- XLConnect::loadWorkbook(path)
 
@@ -31,10 +31,6 @@
   if(!(all(c("prop_file_id", "inv_type", "plot_size") %in%
            cruise$property[,1]))) {
     stop("Critical fields missing from property worksheet.")
-  }
-
-  if(is.na(cruise$property[,2][cruise$property[,1] == "prop_file_id"])) {
-    message("Property file id missing from cruise workbook.")
   }
 
   if(!(cruise$property[,2][cruise$property[,1] == "inv_type"] %in% 1:3)) {

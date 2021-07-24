@@ -1,6 +1,13 @@
+#' Forest cruise input
+#'
+#' Process forest inventory data from a properly formatted Excel workbook.
+#'
+#' @param path path to .xls or .xlsx file with inventory data. See example
+#'  workbook for proper formatting.
+#'
+#' @return cruise object
+#' @export
 cruise <- function(path) {
-
-  # ensure spreadsheet is in supported format
   if(!stringr::str_detect(path, "\\.xlsx?$")) {
     stop("path must point to .xls or .xlsx file")
   }
