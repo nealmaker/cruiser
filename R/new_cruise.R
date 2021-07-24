@@ -33,10 +33,6 @@
     stop("Critical fields missing from property worksheet.")
   }
 
-  if(is.na(cruise$property[,2][cruise$property[,1] == "prop_file_id"])) {
-    message("Property file id missing from cruise workbook.")
-  }
-
   if(!(cruise$property[,2][cruise$property[,1] == "inv_type"] %in% 1:3)) {
     stop("No valid inventory type entered in cruise workbook.")
   }
