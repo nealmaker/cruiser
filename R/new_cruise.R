@@ -1,12 +1,6 @@
  new_cruise <- function(path){
 
-  # ensure spreadsheet is in supported format
-  if(!stringr::str_detect(path, "\\.xlsx?$")) {
-    stop("path must point to .xls or .xlsx file")
-  }
-
-
-  # Read in inventory worksheets -----------------------------------------------
+   # Read in inventory worksheets -----------------------------------------------
 
   wkbk <- XLConnect::loadWorkbook(path)
 
@@ -35,11 +29,6 @@
   # property df ----------------------------------------------------------------
 
   if(!(all(c("prop_file_id", "inv_type", "plot_size") %in%
-           cruise$property[,1]))) {
-    stop("Critical fields missing from property worksheet.")
-  }
-
-  if(!(all(c("prop_file_id", "inv_type", "plot size") %in%
            cruise$property[,1]))) {
     stop("Critical fields missing from property worksheet.")
   }
@@ -136,39 +125,6 @@
     }
 
     cruise$trees$ba_ac <- .005454 * cruise$trees$dbh ^ 2 * cruise$trees$tpa
-
-
-    # Warnings *******
-
-    if(any(is.na(cruise$trees$spp))) {
-      message("Trees with no species id in cruise workbook.")
-      # cruise$trees$spp[!is.na(cruise$trees$spp)] <- "other hardwood"
-    }
-
-    if(any(is.na(cruise$trees$dbh)) | any(cruise$trees$dbh < 0)) {
-      message("Invalid or missing dbh in cruise workbook.")
-    }
-
-    if(any(cruise$trees$dbh > 40, na.rm = T)) {
-      message('Trees in cruise workbook with dbh > 40".')
-    }
-
-    if(any(cruise$trees$cr < 0 | cruise$trees$cr > 10, na.rm = T)) {
-      message("Invalid crown ratio(s) in cruise workbook.")
-    }
-
-    if(any(is.na(cruise$trees$cr)) & !(all(is.na(cruise$trees$cr)))) {
-      message("Some trees in cruise workbook have cr, but not all.")
-    }
-
-    if(any(is.na(cruise$trees$logs)) & !(all(is.na(cruise$trees$logs)))) {
-      message("Some trees in cruise workbook have log grade data, but not all.")
-      # cruise$trees$logs[is.na(cruise$trees$logs)] <- "2"
-    }
-
-    if(any(stringr::str_detect(cruise$trees$logs, "[^,\\*12356]"), na.rm = T)) {
-      message("Invalid log grade(s) in cruise workbook.")
-    }
   }
 
 
@@ -194,6 +150,6 @@
 
   # Return S3 object -----------------------------------------------------------
 
-  class(cruise) <- c("cruise", "list")
+  class(cruise) <- "cruise"
   return(cruise)
 }
