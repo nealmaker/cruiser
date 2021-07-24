@@ -1,4 +1,4 @@
-new_cruise <- function(path){
+ new_cruise <- function(path){
 
   # ensure spreadsheet is in supported format
   if(!stringr::str_detect(path, "\\.xlsx?$")) {
