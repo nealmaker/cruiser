@@ -42,34 +42,62 @@
   }
 
   if(cruise$property[,2][cruise$property[,1] == "inv_type"] == 3) {
+
     if(is.na(cruise$property[,2][cruise$property[,1] == "dbh_cutoffs"])) {
       stop("Nested fixed area plots indicated, but no dbh cutoffs provided.")
     }
 
-    # error if length of cutoffs != length of plot sizes
+    if(length(unlist(strsplit(
+      cruise$property[,2][cruise$property[,1] == "dbh_cutoffs"]))) !=
+      length(unlist(strsplit(
+        cruise$property[,2][cruise$property[,1] == "dbh_cutoffs"])))) {
+      stop("Nested fixed area plots indicated, but number of dbh cutoffs
+           does not match number of plot sizes.")
+    }
   }
 
 
   # Stands df ------------------------------------------------------------------
 
   if(!(typeof(cruise$stands) == "logical")) {
-    # ensure column headers are right
+    if(!all((c("stand", "site_class", "structure", "history", "regen", "health",
+         "access", "soils_comma_separated", "acres_calc", "acres_legal",
+         "ineligible_wetlands", "ineligible_roads_landings", "wildlife",
+         "narrative", "type", "fia_type", "structure.1") %in%
+       names(cruise$stands)))) {
+      stop("One or more fields missing from stands sheet. Please use standard cruise
+           woorkbook for data entry.")
+    }
 
     cruise$stands <- cruise$stands %>%
       dplyr::select(-c("type_code", "structure")) %>%
       dplyr::rename(structure = structure.1) %>%
       dplyr::mutate(stand = as.character(stand),
+                    site_class = stringr::str_trim(as.character(site_class)),
                     acres_calc = as.numeric(acres_calc),
                     acres_legal = as.numeric(acres_legal))
 
-    # Warnings *******
+    # Warnings
+    if(!all(cruise$stands$site_class %in%
+         c("I", "II", "III", "IV", "4", "5", "6", "7", NA))){
+      warning("One or more unsupported site classes in stands sheet.")
+    }
+
+    # forest types match model format
+    # soils will return real soil listings (maybe named for county and soil #)
   }
 
 
   # trees df -------------------------------------------------------------------
 
   if(!(typeof(cruise$trees) == "logical")) {
-    # ensure column headers are right
+    # ensure column headers are right (accomodate 'ugs' column instead of 'vigor' & 'logs', etc.)
+    if(!all((c("spp", "stand", "plot", "dbh") %in% names(cruise$trees)))) {
+      stop("One or more critical fields are missing from trees sheet.")
+      }
+    # what about making sure there's data to figure out ugs?
+
+    # warning if there are stands without entries in cruise$stands
 
     # fill default vigor and cut if some data was collected
     if(!all(is.na(cruise$trees$vigor))) {
@@ -89,6 +117,11 @@
       message("Missing tree vigors defaulting to '2'.")
     }
 
+    # first, general stuff unrelated to ugs, vigor, logs
+    # if there's ugs data, fill "0"s & use to populate ags
+    # else use vigor and logs to populate ags
+    # some scenario with vigor and no logs data? (Would need ugs instead) or one field for vigor that indicates ugs b/c poor quality.
+    # deal with vigor and logs data if they exist
     cruise$trees <- cruise$trees %>%
       tidyr::fill(stand, plot) %>%
       dplyr::select(-code) %>%
